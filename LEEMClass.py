@@ -6,6 +6,7 @@ from __future__ import print_function
 import struct
 import numpy as np
 import sys
+import logging
 from datetime import datetime, timedelta
 ########## TODOS ##########
 # Fix FOV for python2
@@ -23,11 +24,11 @@ class LEEMImg:
         if len(args) > 0:
             self.filename = args[0]
             self.metadata = {}
-            print('----------------------------------------------------------')
-            print('FILE:\t', self.filename)
-            print('----------------------------------------------------------')
+            logging.info('---------------------------------------------------')
+            logging.info('FILE:\t{}'.format(self.filename))
+            logging.info('---------------------------------------------------')
             self._load_file()
-            print('----------------------------------------------------------')
+            logging.info('---------------------------------------------------')
 
     def _load_file(self):
         """Read metadata and image data from file."""
@@ -62,8 +63,8 @@ class LEEMImg:
             val = struct.unpack('<f', header[position+len(temp_1)+len(temp_2)
                                 + 3:position+len(temp_1)+len(temp_2)+7])[0]
             offset = len(temp_1)+len(temp_2)+6  # length of entire field
-            print('\t{:>3}\t{:<18}\t{:g} {}'.format(header[current_position],
-                  str_1+':', val, str_2))
+            logging.info('\t{:>3}\t{:<18}\t{:g} {}'.format(header[current_position],
+                         str_1+':', val, str_2))
             return str_1, str_2, val, offset
 
         # open file and read header contents
@@ -79,7 +80,7 @@ class LEEMImg:
 
             self.width = struct.unpack('<h', f.read(2))[0]
             self.height = struct.unpack('<h', f.read(2))[0]
-            print('\tDimensions:\t', self.width, ' x ', self.height, sep='')
+            logging.info('\tDimensions:\t {} x {}'.format(self.width, self.height))
             self.noimg = struct.unpack('<h', f.read(2))[0]
             attachedRecipeSize = struct.unpack('<h', f.read(2))[0]
 
@@ -97,9 +98,8 @@ class LEEMImg:
             self.metadata['colorscale_high'] = struct.unpack('<h', f.read(2))[0]
 
             self.metadata['timestamp'] = convert_ad_timestamp(struct.unpack('<Q', f.read(8))[0])
-            print('\tTime Stamp:',
-                  self.metadata['timestamp'].strftime("%Y-%m-%d %H:%M"),
-                  sep='\t')
+            logging.info('\tTime Stamp:\t{}'.format(
+                  self.metadata['timestamp'].strftime("%Y-%m-%d %H:%M")))
             self.metadata['mask_xshift'] = struct.unpack('<h', f.read(2))[0]
             self.metadata['mask_yshift'] = struct.unpack('<h', f.read(2))[0]
             self.metadata['usemask'] = f.read(1)
@@ -110,7 +110,7 @@ class LEEMImg:
             self.metadata['spin'] = struct.unpack('<h', f.read(2))[0]
             self.versleemdata = struct.unpack('<h', f.read(2))[0]
 
-            print('\nCOLLECTING META DATA: \n')
+            logging.info('\tCOLLECTING META DATA:\t')
             # read second block of image header into byte sequence
             #      -     usually block of 256 bytes
             #     -     if too many metadata are stored, 388 empty bytes
@@ -122,7 +122,7 @@ class LEEMImg:
                 img_header = f.read(self.versleemdata)
             position = 0
             #### DEBUG ####
-            #print('type(img_header) = {}'.format(type(img_header)))
+            logging.debug('type(img_header) = {}'.format(type(img_header)))
             ###############
             b_iter = iter(img_header)
             # data_fields with standard format in Bremen
@@ -143,7 +143,7 @@ class LEEMImg:
                 if sys.version_info[0] < 3:
                     b = ord(b)
                 #### DEBUG ####
-                #print('b = {}'.format(b))
+                logging.debug('b = {}'.format(b))
                 ###############
                 # stop when reaching end of header
                 if b == 255:
@@ -152,7 +152,7 @@ class LEEMImg:
                 elif b in known_tags:
                     [fieldname, unit, value, offset] = read_field(img_header, b_iter, position)
                     self.metadata[fieldname] = [value, unit]
-                    print('\t{:>3}\t{:<18}\t{:g} {}'.format(
+                    logging.info('\t{:>3}\t{:<18}\t{:g} {}'.format(
                         b, fieldname+':', value, unit))
                 # FOV
                 elif b == 110:
@@ -164,50 +164,58 @@ class LEEMImg:
                     if fov_str[0:4] == 'LEED':
                         self.metadata['LEED'] = True
                         self.metadata['FOV'] = None
-                        print('\t{:>3}\t{:<18}\t{}'.format(
+                        logging.info('\t{:>3}\t{:<18}\t{}'.format(
                             b, 'Field Of View:', 'LEED'))
-                        print('\t{:>3}\t{:<18}\t{}'.format(
+                        logging.info('\t{:>3}\t{:<18}\t{}'.format(
                             '', 'FOV cal. factor:', self.metadata['FOV cal. factor']))
                     # for normal images
                     else:
                         ##### DEBUG #####
-                        #print('fov_str = {}'.format(temp))
+                        logging.debug('fov_str = {}'.format(temp))
                         #################
                         ## TODO FIX FOV for python2
                         if sys.version_info[0] > 2:
                             self.metadata['LEED'] = False
                             self.metadata['FOV'] = \
                                 [float(fov_str.split('\xb5m')[0]), '\xb5m']
-                            print('\t{:>3}\t{:<18}\t{:g} {}'.format(
-                                b, 'Field Of View:', self.metadata['FOV'][0], self.metadata['FOV'][1]))
-                            print('\t{:>3}\t{:<18}\t{}'.format(
-                                '', 'FOV cal. factor:', self.metadata['FOV cal. factor']))
+                            logging.info('\t{:>3}\t{:<18}\t{:g} {}'.format(
+                                b, 'Field Of View:',
+                                self.metadata['FOV'][0],
+                                self.metadata['FOV'][1]))
+                            logging.info('\t{:>3}\t{:<18}\t{}'.format(
+                                '', 'FOV cal. factor:',
+                                self.metadata['FOV cal. factor']))
                         else:
-                            print('Read FOV not implemented for python < 3!')
+                            logging.warning('Read FOV not implemented for python < 3!')
 
                     offset = len(temp)+5
                 # Camera Exposure
                 elif b == 104:
                     self.metadata['Camera Exposure'] = [struct.unpack('<f', img_header[position+1:position+5])[0], 's']
                     self.metadata['Average Images'] = img_header[position+5]
-                    print('\t{:>3}\t{:<18}\t{:g} {}'.format(
-                        b, 'Camera Exposure:', self.metadata['Camera Exposure'][0],
+                    logging.info('\t{:>3}\t{:<18}\t{:g} {}'.format(
+                        b, 'Camera Exposure:',
+                        self.metadata['Camera Exposure'][0],
                         self.metadata['Camera Exposure'][1]))
                     if self.metadata['Average Images'] == 0:
-                        print('\t{:>3}\t{:<18}\t{:s} {}'.format(
-                            '', 'Average Images:', self.metadata['Average Images'],
+                        logging.info('\t{:>3}\t{:<18}\t{:s} {}'.format(
+                            '', 'Average Images:',
+                            self.metadata['Average Images'],
                             '\t=> No Averaging'))
                     elif self.metadata['Average Images'] == 255:
-                        print('\t{:>3}\t{:<18}\t{:s} {}'.format(
-                            '', 'Average Images:', self.metadata['Average Images'],
+                        logging.info('\t{:>3}\t{:<18}\t{:s} {}'.format(
+                            '', 'Average Images:',
+                            self.metadata['Average Images'],
                             '\t=> Sliding Average'))
                     else:
                         if sys.version_info[0] > 2:
-                            print('\t{:>3}\t{:<18}\t{:g}'.format(
-                                '', 'Average Images:', self.metadata['Average Images']))
+                            logging.info('\t{:>3}\t{:<18}\t{:g}'.format(
+                                '', 'Average Images:',
+                                self.metadata['Average Images']))
                         else:
-                            print('\t{:>3}\t{:<18}\t{:g}'.format(
-                                        '', 'Average Images:', ord(self.metadata['Average Images'])))
+                            logging.info('\t{:>3}\t{:<18}\t{:g}'.format(
+                                         '', 'Average Images:',
+                                         ord(self.metadata['Average Images'])))
 
                     offset = 6
                 # Pressure Gauges
@@ -221,17 +229,19 @@ class LEEMImg:
                         [struct.unpack('<f', img_header[position+1:position+5])[0], 'mm']
                     self.metadata['Mitutoyo Y'] = \
                         [struct.unpack('<f', img_header[position+5:position+9])[0], 'mm']
-                    print('\t{:>3}\t{:<18}\t{:g} {}'.format(
-                        b, 'Mitutoyo X:', self.metadata['Mitutoyo X'][0], self.metadata['Mitutoyo X'][1]))
-                    print('\t{:>3}\t{:<18}\t{:g} {}'.format(
-                        '', 'Mitutoyo Y:', self.metadata['Mitutoyo Y'][0], self.metadata['Mitutoyo X'][1]))
+                    logging.info('\t{:>3}\t{:<18}\t{:g} {}'.format(
+                        b, 'Mitutoyo X:', self.metadata['Mitutoyo X'][0],
+                        self.metadata['Mitutoyo X'][1]))
+                    logging.info('\t{:>3}\t{:<18}\t{:g} {}'.format(
+                        '', 'Mitutoyo Y:', self.metadata['Mitutoyo Y'][0],
+                        self.metadata['Mitutoyo X'][1]))
                     offset = 8
 
                 # Image Title. WARNING: Not sure! Probably null-terminated string.
                 elif b == 233:
                     temp = img_header[position+1:].split(b'\x00')[0]
                     self.metadata['Image Title'] = temp.decode('cp1252')
-                    print('\t{:>3}\t{:<18}\t{}'.format(
+                    logging.info('\t{:>3}\t{:<18}\t{}'.format(
                         b, 'Image Title:', self.metadata['Image Title']))
                     offset = len(temp) + 1
 
@@ -241,28 +251,27 @@ class LEEMImg:
                 #          244 (MCPchanneplate) probably float for channelplate voltage
                 elif b == 242:
                     self.metadata['MirrorState'] = img_header[position+1]
-                    print('\t{:>3}\t{:<18}\t{:g}'.format(b, 'MirrorState:', self.metadata['MirrorState']))
+                    logging.info('\t{:>3}\t{:<18}\t{:g}'.format(b, 'MirrorState:', self.metadata['MirrorState']))
                     offset = 2
 
                 elif b == 243:
                     self.metadata['MCPscreen'] = [struct.unpack('<f', img_header[position+1:position+5])[0], 'V']
-                    print('\t{:>3}\t{:<18}\t{:g} {}'.format(
+                    logging.info('\t{:>3}\t{:<18}\t{:g} {}'.format(
                         b, 'MCPscreen:', self.metadata['MCPscreen'][0], self.metadata['MCPscreen'][1]))
                     offset = 4
 
                 elif b == 244:
                     self.metadata['MCPchannelplate'] = [struct.unpack('<f', img_header[position+1:position+5])[0], 'V']
-                    print('\t{:>3}\t{:<18}\t{:g} {}'.format(
+                    logging.info('\t{:>3}\t{:<18}\t{:g} {}'.format(
                         b, 'MCPchannelplate:', self.metadata['MCPchannelplate'][0],
                         self.metadata['MCPchannelplate'][1]))
                     offset = 4
 
                 # Just in case I forgot something:
                 else:
-                    print('WARNING: Unknown field tag ', b,
-                          ' ("', str(b), '") at position ', position,
-                          '. This and following data fields might be misinterpreted!', sep='')
-                    offset = 0
+                    logging.warning('WARNING: Unknown field tag {0} at\
+                            position {1}. This and following data fields might\
+                            be misinterpreted!'.format(b, position))
 
                 # skip byte number given by offset - depending on length of
                 # read data field, update position counter
@@ -276,6 +285,8 @@ class LEEMImg:
 
 
 if __name__ == '__main__':
+
+    logging.basicConfig(level=logging.INFO)
 
     # for test purposes
     im = LEEMImg('testfiles/CCD_2x2.dat')
