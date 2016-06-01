@@ -1,6 +1,5 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-
 
 from __future__ import print_function
 import struct
@@ -78,9 +77,10 @@ class LEEMImg:
             f.seek(6,1)  # for alignment
             f.seek(8,1)  # spare
 
-            self.width = struct.unpack('<h', f.read(2))[0]
-            self.height = struct.unpack('<h', f.read(2))[0]
-            logging.info('\tDimensions:\t {} x {}'.format(self.width, self.height))
+            self.metadata['width'] = struct.unpack('<h', f.read(2))[0]
+            self.metadata['height'] = struct.unpack('<h', f.read(2))[0]
+            logging.info('\tDimensions:\t {} x {}'.format(
+                self.metadata['width'], self.metadata['height']))
             self.noimg = struct.unpack('<h', f.read(2))[0]
             attachedRecipeSize = struct.unpack('<h', f.read(2))[0]
 
@@ -186,7 +186,8 @@ class LEEMImg:
                                 '', 'FOV cal. factor:',
                                 self.metadata['FOV cal. factor']))
                         else:
-                            logging.warning('Read FOV not implemented for python < 3!')
+                            logging.warning('Read FOV not implemented for python < v3!')
+                            self.metadata['FOV'] = 'LEEM'
 
                     offset = len(temp)+5
                 # Camera Exposure
@@ -279,9 +280,10 @@ class LEEMImg:
                 position += offset + 1
 
             # Now read image data
-            f.seek(-2*self.height*self.width, 2)
+            f.seek(-2*self.metadata['height']*self.metadata['width'], 2)
             self.data = np.fromfile(f, dtype=np.uint16, sep='')
-            self.data = self.data.reshape([self.height, self.width])
+            self.data = self.data.reshape(
+                [self.metadata['height'], self.metadata['width']])
 
 
 if __name__ == '__main__':
