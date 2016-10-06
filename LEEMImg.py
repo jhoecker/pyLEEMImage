@@ -7,12 +7,8 @@ import numpy as np
 import sys
 import logging
 from datetime import datetime, timedelta
-########## TODOS ##########
-# Fix FOV for python2
-########## FIXMES #########
 
-
-class LEEMImg:
+class UKSoftImg:
     """Full data of Elmitec LEEM files (image + metadata) but without overlay
     data. Tested with U-View 2002 11.3.0 and LEEM III in Bremen and extended
     for data fields from LEEM/XPEEM at I311 at MaxLAB III.
@@ -143,7 +139,7 @@ class LEEMImg:
                 if sys.version_info[0] < 3:
                     b = ord(b)
                 #### DEBUG ####
-                logging.debug('b = {}'.format(b))
+                #logging.#debug('b = {}'.format(b))
                 ###############
                 # stop when reaching end of header
                 if b == 255:
@@ -171,7 +167,7 @@ class LEEMImg:
                     # for normal images
                     else:
                         ##### DEBUG #####
-                        logging.debug('fov_str = {}'.format(temp))
+                        #logging.debug('fov_str = {}'.format(temp))
                         #################
                         ## TODO FIX FOV for python2
                         if sys.version_info[0] > 2:
