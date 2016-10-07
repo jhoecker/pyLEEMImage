@@ -195,12 +195,12 @@ class UKSoftImg:
                         self.metadata['Camera Exposure'][0],
                         self.metadata['Camera Exposure'][1]))
                     if self.metadata['Average Images'] == 0:
-                        logging.info('\t{:>3}\t{:<18}\t{:s} {}'.format(
+                        logging.info('\t{:>3}\t{:<18}\t{:d} {}'.format(
                             '', 'Average Images:',
                             self.metadata['Average Images'],
                             '\t=> No Averaging'))
                     elif self.metadata['Average Images'] == 255:
-                        logging.info('\t{:>3}\t{:<18}\t{:s} {}'.format(
+                        logging.info('\t{:>3}\t{:<18}\t{:d} {}'.format(
                             '', 'Average Images:',
                             self.metadata['Average Images'],
                             '\t=> Sliding Average'))
