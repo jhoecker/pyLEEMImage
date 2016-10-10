@@ -281,18 +281,42 @@ class UKSoftImg:
             self.data = self.data.reshape(
                 [self.metadata['height'], self.metadata['width']])
 
+    def normalizeOnCCD(self, lCCD):
+        """Normalize LEEM image on CCD"""
+        if type(lCCD) is not UKSoftImg:
+            raise TypeError('Image divisor not of type UKSoft')
+        if (self.metadata['width']!= lCCD.metadata['width'] or
+            self.metadata['height'] != lCCD.metadata['height']):
+            raise DimensionError('Dimensions of LEEM image and CCD image do not match')
+        self.data = np.divide(self.data,lCCD.data)
+        self.data = self.data/self.data.max()
+
+
+class DimensionError(Exception):
+    """Exception raised when the dimension of two LEEM images are not
+    eqivalent."""
+    def __init__(self, message):
+        self.message = message
+
 
 if __name__ == '__main__':
 
     logging.basicConfig(level=logging.INFO)
 
     # for test purposes
-    im = LEEMImg('testfiles/CCD_2x2.dat')
+    CCD = UKSoftImg('testfiles/CCD_2x2.dat')
+    im = UKSoftImg('testfiles/LEEM_Jul2016.dat')
+    im.normalizeOnCCD(CCD)
 
-    #import matplotlib.pyplot as plt
-    #fig = plt.figure(frameon=False, figsize=(3, 3*im.height/im.width), dpi=im.width/3)
-    #ax = plt.Axes(fig, [0., 0., 1., 1.])
-    #ax.set_axis_off()
-    #fig.add_axes(ax)
-    #ax.imshow(im.data, cmap='gray', clim=(np.amin(im.data), np.amax(im.data)), aspect='normal')
-    #plt.show()
+    import matplotlib.pyplot as plt
+    fig = plt.figure(frameon=False, 
+                     figsize=(3, 3*im.metadata['height']/im.metadata['width']),
+                     dpi=im.metadata['width']/3)
+    ax = plt.Axes(fig, [0., 0., 1., 1.])
+    ax.set_axis_off()
+    fig.add_axes(ax)
+    ax.imshow(im.data, cmap='gray',
+              clim=(np.amin(im.data),
+                    np.amax(im.data)),
+              aspect='auto')
+    plt.show()
