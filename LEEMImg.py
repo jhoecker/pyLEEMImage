@@ -4,6 +4,7 @@
 from __future__ import print_function
 import struct
 import numpy as np
+import scipy.ndimage
 import sys
 import logging
 from datetime import datetime, timedelta
@@ -118,7 +119,7 @@ class UKSoftImg:
                 img_header = f.read(self.versleemdata)
             position = 0
             #### DEBUG ####
-            logging.debug('type(img_header) = {}'.format(type(img_header)))
+            #logging.debug('type(img_header) = {}'.format(type(img_header)))
             ###############
             b_iter = iter(img_header)
             # data_fields with standard format in Bremen
@@ -288,8 +289,17 @@ class UKSoftImg:
         if (self.metadata['width']!= lCCD.metadata['width'] or
             self.metadata['height'] != lCCD.metadata['height']):
             raise DimensionError('Dimensions of LEEM image and CCD image do not match')
-        self.data = np.divide(self.data,lCCD.data)
-        self.data = self.data/self.data.max()
+        correctedData = np.divide(self.data,lCCD.data)
+        correctedData /= self.data.max()
+        return correctedData
+
+    def filterInelasticBkg(self, sigma=15):
+        """Experimental function to remove the inelastic background in
+        LEED images. Works like a high-pass filter by subtracting the
+        gaussian filtered image."""
+        self.data = np.divide(self.data, self.data.max())
+        dataGaussFiltered = scipy.ndimage.gaussian_filter(self.data, sigma)
+        return self.data - dataGaussFiltered
 
 
 class DimensionError(Exception):
@@ -304,9 +314,10 @@ if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
 
     # for test purposes
-    CCD = UKSoftImg('testfiles/CCD_2x2.dat')
-    im = UKSoftImg('testfiles/LEEM_Jul2016.dat')
-    im.normalizeOnCCD(CCD)
+    CCD = UKSoftImg('testfiles/CCD_2x2_Nov2014.dat')
+    im = UKSoftImg('testfiles/LEEM_img.dat')
+    #im.normalizeOnCCD(CCD)
+    im.filterInelasticBkg()
 
     import matplotlib.pyplot as plt
     fig = plt.figure(frameon=False, 
