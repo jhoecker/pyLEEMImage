@@ -284,7 +284,7 @@ class LEEMImage:
 
     def normalizeOnCCD(self, lCCD):
         """Normalize LEEM image on CCD"""
-        if type(lCCD) is not UKSoftImg:
+        if type(lCCD) is not LEEMImage:
             raise TypeError('Image divisor not of type UKSoft')
         if (self.metadata['width']!= lCCD.metadata['width'] or
             self.metadata['height'] != lCCD.metadata['height']):
