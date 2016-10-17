@@ -9,7 +9,7 @@ import sys
 import logging
 from datetime import datetime, timedelta
 
-class UKSoftImg:
+class LEEMImage:
     """Full data of Elmitec LEEM files (image + metadata) but without overlay
     data. Tested with U-View 2002 11.3.0 and LEEM III in Bremen and extended
     for data fields from LEEM/XPEEM at I311 at MaxLAB III.
@@ -245,7 +245,7 @@ class UKSoftImg:
 
                 # WARNING: Correct usage of 242, 243, 244 is unclear!
                 #          242 (MirrorState) format guess: single byte, null
-                #          243    (MCPScreen)    probably float for screen voltage
+                #          243   (MCPScreen)    probably float for screen voltage
                 #          244 (MCPchanneplate) probably float for channelplate voltage
                 elif b == 242:
                     self.metadata['MirrorState'] = img_header[position+1]
