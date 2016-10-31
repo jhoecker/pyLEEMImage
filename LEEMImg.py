@@ -10,7 +10,7 @@ import logging
 from datetime import datetime, timedelta
 
 class LEEMImage:
-    """Full data of Elmitec LEEM files (image + metadata) but without overlay
+    """Import full data of Elmitec LEEM files (image + metadata) but without overlay
     data. Tested with U-View 2002 11.3.0 and LEEM III in Bremen and extended
     for data fields from LEEM/XPEEM at I311 at MaxLAB III.
     No support for dav-files!"""
@@ -317,7 +317,7 @@ if __name__ == '__main__':
     CCD = UKSoftImg('testfiles/CCD_2x2_Nov2014.dat')
     im = UKSoftImg('testfiles/LEEM_img.dat')
     #im.normalizeOnCCD(CCD)
-    im.filterInelasticBkg()
+    #im.filterInelasticBkg()
 
     import matplotlib.pyplot as plt
     fig = plt.figure(frameon=False, 
