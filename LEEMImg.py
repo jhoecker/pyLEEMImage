@@ -167,30 +167,21 @@ class LEEMImage:
                             '', 'FOV cal. factor:', self.metadata['FOV cal. factor']))
                     # for normal images
                     else:
-                        ##### DEBUG #####
-                        #logging.debug('fov_str = {}'.format(temp))
-                        #################
-                        ## TODO FIX FOV for python2
-                        if sys.version_info[0] > 2:
-                            self.metadata['LEED'] = False
-                            try:
-                                self.metadata['FOV'] = \
-                                    [float(fov_str.split('\xb5m')[0]), '\xb5m']
-                            except ValueError:
-                                logging.warning('FOV field tag: not convertable string detected.')
-                                self.metadata['FOV'] = \
-                                    [fov_str.split('\xb5m')[0], '\xb5m']
-                            logging.info('\t{:>3}\t{:<18}\t{} {}'.format(
-                                b, 'Field Of View:',
-                                self.metadata['FOV'][0],
-                                self.metadata['FOV'][1]))
-                            logging.info('\t{:>3}\t{:<18}\t{}'.format(
-                                '', 'FOV cal. factor:',
-                                self.metadata['FOV cal. factor']))
-                        else:
-                            logging.warning('Read FOV not implemented for python < v3!')
-                            self.metadata['FOV'] = 'LEEM'
-
+                        self.metadata['LEED'] = False
+                        try:
+                            self.metadata['FOV'] = \
+                                [float(fov_str.split('\xb5m')[0]), '\xb5m']
+                        except ValueError:
+                            logging.warning('FOV field tag: not convertable string detected.')
+                            self.metadata['FOV'] = \
+                                [fov_str.split('\xb5m')[0], '\xb5m']
+                        logging.info('\t{:>3}\t{:<18}\t{} {}'.format(
+                            b, 'Field Of View:',
+                            self.metadata['FOV'][0],
+                            self.metadata['FOV'][1]))
+                        logging.info('\t{:>3}\t{:<18}\t{}'.format(
+                            '', 'FOV cal. factor:',
+                            self.metadata['FOV cal. factor']))
                     offset = len(temp)+5
                 # Camera Exposure
                 elif b == 104:
@@ -219,7 +210,6 @@ class LEEMImage:
                             logging.info('\t{:>3}\t{:<18}\t{:g}'.format(
                                          '', 'Average Images:',
                                          ord(self.metadata['Average Images'])))
-
                     offset = 6
                 # Pressure Gauges
                 elif b in [106, 107, 108, 109, 235, 236, 237]:
