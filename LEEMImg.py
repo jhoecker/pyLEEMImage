@@ -173,9 +173,14 @@ class LEEMImage:
                         ## TODO FIX FOV for python2
                         if sys.version_info[0] > 2:
                             self.metadata['LEED'] = False
-                            self.metadata['FOV'] = \
-                                [float(fov_str.split('\xb5m')[0]), '\xb5m']
-                            logging.info('\t{:>3}\t{:<18}\t{:g} {}'.format(
+                            try:
+                                self.metadata['FOV'] = \
+                                    [float(fov_str.split('\xb5m')[0]), '\xb5m']
+                            except ValueError:
+                                logging.warning('FOV field tag: not convertable string detected.')
+                                self.metadata['FOV'] = \
+                                    [fov_str.split('\xb5m')[0], '\xb5m']
+                            logging.info('\t{:>3}\t{:<18}\t{} {}'.format(
                                 b, 'Field Of View:',
                                 self.metadata['FOV'][0],
                                 self.metadata['FOV'][1]))
@@ -243,6 +248,12 @@ class LEEMImage:
                         b, 'Image Title:', self.metadata['Image Title']))
                     offset = len(temp) + 1
 
+                # WARNING: Field tag 240 found in files from Elettra.
+                # Value usually 0, purpose unknown.
+                elif b == 240:
+                    logging.info('\t{:>3}\tPurpose unknown'.format(b))
+                    offset = 2
+
                 # WARNING: Correct usage of 242, 243, 244 is unclear!
                 #          242 (MirrorState) format guess: single byte, null
                 #          243   (MCPScreen)    probably float for screen voltage
@@ -267,9 +278,9 @@ class LEEMImage:
 
                 # Just in case I forgot something:
                 else:
-                    logging.warning('WARNING: Unknown field tag {0} at\
-                            position {1}. This and following data fields might\
-                            be misinterpreted!'.format(b, position))
+                    logging.warning('WARNING: Unknown field tag {0} at '\
+                            'position {1}. This and following data fields might '\
+                            'be misinterpreted!'.format(b, position))
 
                 # skip byte number given by offset - depending on length of
                 # read data field, update position counter
@@ -314,9 +325,8 @@ if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
 
     # for test purposes
-    CCD = UKSoftImg('testfiles/CCD_2x2_Nov2014.dat')
-    im = UKSoftImg('testfiles/LEEM_img.dat')
-    #im.normalizeOnCCD(CCD)
+    im = LEEMImage('testfiles/Maxlab2015.dat')
+    #im.normalizeOnCCD()
     #im.filterInelasticBkg()
 
     import matplotlib.pyplot as plt
