@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function
 import struct
 import numpy as np
 import scipy.ndimage
@@ -163,26 +162,26 @@ class LEEMImage:
                         self.metadata['FOV'] = None
                         logging.info('\t{:>3}\t{:<18}\t{}'.format(
                             b, 'Field Of View:', 'LEED'))
-                        logging.info('\t{:>3}\t{:<18}\t{}'.format(
-                            '', 'FOV cal. factor:', self.metadata['FOV cal. factor']))
                     # for normal images
+                    elif fov_str[0:4] == 'none':
+                        self.metadata['FOV'] = None
+                        logging.info('\t{:>3}\t{:<18}\t{}'.format(
+                            b, 'Field Of View:', 'None'))
                     else:
                         self.metadata['LEED'] = False
                         try:
-                            self.metadata['FOV'] = \
-                                [float(fov_str.split('\xb5m')[0]), '\xb5m']
+                            self.metadata['FOV'] = [float(fov_str.split('\xb5m')[0]), '\xb5m']
+                            logging.info('\t{:>3}\t{:<18}\t{} {}'.format(
+                                b, 'Field Of View:',
+                                self.metadata['FOV'][0],
+                                self.metadata['FOV'][1]))
                         except ValueError:
-                            logging.warning('FOV field tag: not convertable string detected.')
-                            self.metadata['FOV'] = \
-                                [fov_str.split('\xb5m')[0], '\xb5m']
-                        logging.info('\t{:>3}\t{:<18}\t{} {}'.format(
-                            b, 'Field Of View:',
-                            self.metadata['FOV'][0],
-                            self.metadata['FOV'][1]))
-                        logging.info('\t{:>3}\t{:<18}\t{}'.format(
-                            '', 'FOV cal. factor:',
-                            self.metadata['FOV cal. factor']))
+                            logging.error('FOV field tag: not known string detected: {}'.format(fov_str))
+                    logging.info('\t{:>3}\t{:<18}\t{}'.format('',
+                                                              'FOV cal. factor:',
+                                                              self.metadata['FOV cal. factor']))
                     offset = len(temp)+5
+
                 # Camera Exposure
                 elif b == 104:
                     self.metadata['Camera Exposure'] = [struct.unpack('<f', img_header[position+1:position+5])[0], 's']
@@ -238,19 +237,19 @@ class LEEMImage:
                         b, 'Image Title:', self.metadata['Image Title']))
                     offset = len(temp) + 1
 
-                # WARNING: Field tag 240 found in files from Elettra.
-                # Value usually 0, purpose unknown.
-                elif b == 240:
-                    logging.info('\t{:>3}\tPurpose unknown'.format(b))
-                    offset = 2
-
-                # WARNING: Correct usage of 242, 243, 244 is unclear!
-                #          242 (MirrorState) format guess: single byte, null
+                # WARNING: Correct usage of 240, 242, 243, 244 is unclear!
+                #          240 (MirrorState1) format guess: single byte, null
+                #          242 (MirrorState2) format guess: single byte, null
                 #          243   (MCPScreen)    probably float for screen voltage
                 #          244 (MCPchanneplate) probably float for channelplate voltage
+                elif b == 240:
+                    self.metadata['MirrorState1'] = img_header[position+1]
+                    logging.info('\t{:>3}\t{:<18}\t{:g}'.format(b, 'MirrorState1:', self.metadata['MirrorState1']))
+                    offset = 2
+
                 elif b == 242:
-                    self.metadata['MirrorState'] = img_header[position+1]
-                    logging.info('\t{:>3}\t{:<18}\t{:g}'.format(b, 'MirrorState:', self.metadata['MirrorState']))
+                    self.metadata['MirrorState2'] = img_header[position+1]
+                    logging.info('\t{:>3}\t{:<18}\t{:g}'.format(b, 'MirrorState2:', self.metadata['MirrorState2']))
                     offset = 2
 
                 elif b == 243:
@@ -268,7 +267,7 @@ class LEEMImage:
 
                 # Just in case I forgot something:
                 else:
-                    logging.warning('WARNING: Unknown field tag {0} at '\
+                    logging.error('ERROR: Unknown field tag {0} at '\
                             'position {1}. This and following data fields might '\
                             'be misinterpreted!'.format(b, position))
 
@@ -315,7 +314,7 @@ if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
 
     # for test purposes
-    im = LEEMImage('testfiles/Maxlab2015.dat')
+    im = LEEMImage('testfiles/UniBremen2016.dat')
     #im.normalizeOnCCD()
     #im.filterInelasticBkg()
 
