@@ -1,6 +1,13 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+"""
+Python LEEM image module
+(c) 2016 Jon-Olaf Krisponeit, Jan Höcker
+
+License: LGPL
+"""
+
 import struct
 import numpy as np
 import scipy.ndimage
