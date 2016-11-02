@@ -1,5 +1,4 @@
 *.pyc
-testfiles/*
 import_UKheader.py
 .directory
 *.swp
