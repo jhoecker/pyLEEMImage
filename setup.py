@@ -13,7 +13,7 @@ with open(path.join(current_path, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
 setup(
-    name='LEEMImg',
+    name='LEEMImage',
     version='0.9.0',
     description='LEEM Image module to import and operate LEEM images',
     long_description=long_description,
@@ -23,12 +23,12 @@ setup(
         'Jan Höcker <jhoecker@ifp.uni-bremen.de>',
     license='LGPLv3+',
     classifiers=[
-        'Development Status :: 4',
+        'Development Status :: 4 - Beta',
         'Intended Audience :: Science',
         'License :: OSI Approved :: GNU Lesser General Public License v3 or later (LGPLv3+)'
         'License :: OSI Approved :: LGPL License',
         'Progamming Language :: Python :: 3'
         ],
     keywords='LEEM Science Images',
-    py_modules=['LEEMImg'],
+    py_modules=['LEEMImage'],
     )
