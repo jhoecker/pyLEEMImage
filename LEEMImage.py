@@ -288,6 +288,8 @@ class LEEMImage:
             self.data = np.fromfile(f, dtype=np.uint16, sep='')
             self.data = self.data.reshape(
                 [self.metadata['height'], self.metadata['width']])
+            # Flip image to get the original orientation
+            self.data = np.flipud(self.data)
 
     def normalizeOnCCD(self, lCCD):
         """Normalize LEEM image on CCD"""
