@@ -299,7 +299,7 @@ class LEEMImage:
             self.metadata['height'] != lCCD.metadata['height']):
             raise DimensionError('Dimensions of LEEM image and CCD image do not match')
         correctedData = np.divide(self.data,lCCD.data)
-        correctedData /= self.data.max()
+        correctedData /= correctedData.max()
         return correctedData
 
     def filterInelasticBkg(self, sigma=15):
@@ -310,10 +310,51 @@ class LEEMImage:
         dataGaussFiltered = scipy.ndimage.gaussian_filter(self.data, sigma)
         return self.data - dataGaussFiltered
 
+    def get_levels(self, data=None):
+        """Calculates good min/max values to obtain a good contrast.
+        Differentiate LEEM and LEED mode: For LEEM images only consider
+        the inner square (cutting off the edges usually appearing dark due to the
+        round MCP). For LEED consider the full image because the intensity
+        of the diffuse background is usually as low as the darkcounts.
+        Argument might be used if image data is corrected, which is not stored
+        as LEEMImage instance"""
+
+        def inner_square_size(length):
+            """ Determine size of inner square of a circle"""
+            offset = 5
+            return int(length/(2*np.sqrt(2)))-5
+
+        data = self.data if data is None else data
+
+        # Consider only the inner square for levels if image is a LEEM image
+        try:
+            if self.metadata['LEED'] is False:
+                nrows, ncols = data.shape[0], data.shape[1]
+                new_nrows = inner_square_size(nrows)
+                new_ncols = inner_square_size(ncols)
+                data = data[int(nrows/2)-new_nrows:int(nrows/2)+new_nrows,
+                            int(ncols/2)-new_ncols:int(ncols/2)+new_ncols]
+        except KeyError:
+            pass
+
+        data_histogram = np.histogram(data, bins=30)
+        minlevel = data_histogram[1][0]
+        nhotpixel = 10
+        # Ignore hotpixels when setting intensity
+        if data_histogram[0][-1] < nhotpixel and data_histogram[0][-2] < nhotpixel/2:
+            logging.debug('LEEMImage.get_levels: {} hotpixels detected'.format(
+                data_histogram[0][-1]))
+            # Find reverse index
+            rn_maxlevel = np.argmax(np.flipud(data_histogram[0]))
+            maxlevel = data_histogram[1][-rn_maxlevel]
+        else:
+            maxlevel = data_histogram[1][-2]
+        return minlevel, maxlevel
+
 
 class DimensionError(Exception):
     """Exception raised when the dimension of two LEEM images are not
-    eqivalent."""
+    equivalent."""
     def __init__(self, message):
         self.message = message
 

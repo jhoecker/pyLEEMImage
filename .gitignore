@@ -1,5 +1,9 @@
-*.pyc
-import_UKheader.py
 .directory
+*.pyc
 *.swp
 
+import_UKheader.py
+LEEMImage.egg-info
+
+tests2/
+test_module.py
